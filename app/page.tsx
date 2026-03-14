@@ -34,6 +34,7 @@ export default function Home() {
   const [theme, setTheme] = useState('midnight')
   const [device, setDevice] = useState('16promax')
   const [style, setStyle] = useState('dots')
+  const [lifespan, setLifespan] = useState(90)
   const [copied, setCopied] = useState(false)
   const [previewKey, setPreviewKey] = useState(0)
   const [origin, setOrigin] = useState('')
@@ -43,7 +44,7 @@ export default function Home() {
   }, [])
 
   const wallpaperUrl = origin
-    ? `${origin}/api/wallpaper?birthday=${birthday}&view=${view}&theme=${theme}&device=${device}&style=${style}`
+    ? `${origin}/api/wallpaper?birthday=${birthday}&view=${view}&theme=${theme}&device=${device}&style=${style}&lifespan=${lifespan}`
     : ''
 
   function refreshPreview() {
@@ -190,6 +191,28 @@ export default function Home() {
               labels={{ year: 'Day of Year', life: 'Life Progress' }}
             />
           </div>
+
+          {/* Life Expectancy (only relevant for life view) */}
+          {view === 'life' && (
+            <div>
+              <Label>life expectancy — {lifespan} years</Label>
+              <input
+                type="range"
+                min={50}
+                max={120}
+                value={lifespan}
+                onChange={e => setLifespan(Number(e.target.value))}
+                style={{
+                  width: '100%',
+                  accentColor: '#b088f9',
+                  cursor: 'pointer',
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#444', marginTop: 4 }}>
+                <span>50</span><span>120</span>
+              </div>
+            </div>
+          )}
 
           {/* Theme */}
           <div>
