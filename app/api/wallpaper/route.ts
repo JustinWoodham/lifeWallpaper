@@ -5,7 +5,7 @@ import { createCanvas } from '@napi-rs/canvas'
 
 type Theme = 'midnight' | 'bone' | 'ocean' | 'sage' | 'ember' | 'lavender'
 type View = 'year' | 'life'
-type Device = '16promax' | '16pro' | '16' | 'se'
+type Device = '16promax' | '16pro' | '16' | '12promax' | 'se'
 type Style = 'dots' | 'squares' | 'rings'
 
 interface ThemeColors {
@@ -18,12 +18,12 @@ interface ThemeColors {
 // ─── Theme Palette ───────────────────────────────────────────────────────────
 
 const THEMES: Record<Theme, ThemeColors> = {
-  midnight: { bg: '#000000', filled: '#FFFFFF', empty: '#1a1a1a', text: '#555555' },
-  bone:     { bg: '#f5f0eb', filled: '#1a1410', empty: '#e0d8d0', text: '#8a7e72' },
-  ocean:    { bg: '#0b1628', filled: '#4a9eff', empty: '#152238', text: '#4a6a8a' },
-  sage:     { bg: '#0f1a14', filled: '#6bcf8e', empty: '#162820', text: '#4a7a5a' },
-  ember:    { bg: '#1a0f0b', filled: '#ff6f3c', empty: '#281810', text: '#8a5a3a' },
-  lavender: { bg: '#12101a', filled: '#b088f9', empty: '#1e1a28', text: '#6a5a8a' },
+  midnight: { bg: '#000000', filled: '#FFFFFF', empty: '#383838', text: '#555555' },
+  bone:     { bg: '#f5f0eb', filled: '#1a1410', empty: '#c8bdb4', text: '#8a7e72' },
+  ocean:    { bg: '#0b1628', filled: '#4a9eff', empty: '#1e3a5c', text: '#4a6a8a' },
+  sage:     { bg: '#0f1a14', filled: '#6bcf8e', empty: '#1e4030', text: '#4a7a5a' },
+  ember:    { bg: '#1a0f0b', filled: '#ff6f3c', empty: '#3d2218', text: '#8a5a3a' },
+  lavender: { bg: '#12101a', filled: '#b088f9', empty: '#2e2650', text: '#6a5a8a' },
 }
 
 // ─── Device Resolutions ──────────────────────────────────────────────────────
@@ -32,15 +32,20 @@ const DEVICES: Record<Device, { w: number; h: number }> = {
   '16promax': { w: 1320, h: 2868 },
   '16pro':    { w: 1206, h: 2622 },
   '16':       { w: 1179, h: 2556 },
+  '12promax': { w: 1284, h: 2778 },
   'se':       { w: 750,  h: 1334 },
 }
 
 // ─── Time Calculations ───────────────────────────────────────────────────────
 
-function getWeekOfYear(date: Date): number {
+function getDayOfYear(date: Date): number {
   const start = new Date(date.getFullYear(), 0, 1)
   const diff = date.getTime() - start.getTime()
-  return Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1
+  return Math.floor(diff / (24 * 60 * 60 * 1000)) + 1
+}
+
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
 }
 
 function getWeeksLived(birthday: Date, now: Date): number {
@@ -102,45 +107,42 @@ function drawYearView(
   ctx: CanvasCtx,
   width: number,
   height: number,
-  weeksIn: number,
+  dayOfYear: number,
   theme: ThemeColors,
   style: Style,
   year: number
 ) {
-  const TOTAL = 52
-  const COLS = 4
-  const ROWS = 13
+  const TOTAL = isLeapYear(year) ? 366 : 365
+  const COLS = 15
+  const ROWS = Math.ceil(TOTAL / COLS) // 25 rows
 
-  // Reserve top ~20% for clock overlay, bottom padding
   const topPad = height * 0.22
   const botPad = height * 0.08
-  const sidePad = width * 0.12
+  const sidePad = width * 0.08
 
   const availW = width - sidePad * 2
   const availH = height - topPad - botPad
 
-  // Label area — two lines above grid
   const labelAreaH = height * 0.09
   const gridAvailH = availH - labelAreaH
 
   const cellW = availW / COLS
   const cellH = gridAvailH / ROWS
-  const dotSize = Math.min(cellW, cellH) * 0.38
+  const dotSize = Math.min(cellW, cellH) * 0.44
 
   const gridW = COLS * cellW
-  const gridH = ROWS * cellH
   const gridX = (width - gridW) / 2
   const gridY = topPad + labelAreaH
 
   // Labels
-  const pct = ((weeksIn / TOTAL) * 100).toFixed(1)
+  const pct = ((dayOfYear / TOTAL) * 100).toFixed(1)
   const labelFontSize = Math.round(width * 0.036)
   ctx.fillStyle = theme.text
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
 
   ctx.font = `300 ${labelFontSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`
-  ctx.fillText(`Week ${weeksIn} of ${TOTAL}`, width / 2, topPad + labelAreaH * 0.3)
+  ctx.fillText(`Day ${dayOfYear} of ${TOTAL}`, width / 2, topPad + labelAreaH * 0.3)
 
   ctx.font = `200 ${Math.round(labelFontSize * 0.85)}px -apple-system, "Helvetica Neue", Arial, sans-serif`
   ctx.fillText(`${pct}% of ${year}`, width / 2, topPad + labelAreaH * 0.72)
@@ -151,7 +153,7 @@ function drawYearView(
     const row = Math.floor(i / COLS)
     const cx = gridX + col * cellW + cellW / 2
     const cy = gridY + row * cellH + cellH / 2
-    const filled = i < weeksIn
+    const filled = i < dayOfYear
     drawShape(ctx, style, cx, cy, dotSize, filled ? theme.filled : theme.empty, filled)
   }
 }
@@ -258,8 +260,8 @@ export async function GET(req: NextRequest) {
   ctx.fillRect(0, 0, device.w, device.h)
 
   if (view === 'year') {
-    const weeksIn = Math.min(getWeekOfYear(now), 52)
-    drawYearView(ctx, device.w, device.h, weeksIn, theme, style, now.getFullYear())
+    const dayOfYear = getDayOfYear(now)
+    drawYearView(ctx, device.w, device.h, dayOfYear, theme, style, now.getFullYear())
   } else {
     const weeksLived = Math.max(0, getWeeksLived(birthday, now))
     drawLifeView(ctx, device.w, device.h, weeksLived, theme, style, birthday.getFullYear())

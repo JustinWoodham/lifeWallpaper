@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 
 const THEMES = ['midnight', 'bone', 'ocean', 'sage', 'ember', 'lavender']
-const DEVICES = ['16promax', '16pro', '16', 'se']
+const DEVICES = ['16promax', '16pro', '16', '12promax', 'se']
 const STYLES = ['dots', 'squares', 'rings']
 const VIEWS = ['year', 'life']
 
@@ -11,6 +11,7 @@ const DEVICE_LABELS: Record<string, string> = {
   '16promax': 'iPhone 16 Pro Max',
   '16pro': 'iPhone 16 Pro',
   '16': 'iPhone 16',
+  '12promax': 'iPhone 12 Pro Max',
   'se': 'iPhone SE',
 }
 
@@ -186,7 +187,7 @@ export default function Home() {
               options={VIEWS}
               value={view}
               onChange={setView}
-              labels={{ year: 'Year Progress', life: 'Life Progress' }}
+              labels={{ year: 'Day of Year', life: 'Life Progress' }}
             />
           </div>
 
