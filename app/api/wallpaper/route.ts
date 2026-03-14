@@ -261,11 +261,10 @@ function drawLifeView(
   const statH      = height * 0.07
   const botPad     = height * 0.05
 
-  // Reserve left gutter for decade labels
-  const sidePad       = width * 0.04
-  const decadeLabelW  = width * 0.07
-  const gridStartX    = sidePad + decadeLabelW
-  const gridW         = width - gridStartX - sidePad
+  // Center the dot grid with equal margins; decade labels float in the left margin
+  const sidePad       = width * 0.07
+  const gridStartX    = sidePad
+  const gridW         = width - 2 * sidePad
 
   const availH = height - topPad - mainLabelH - statH - botPad
 
@@ -318,7 +317,7 @@ function drawLifeView(
     const blockMidY = topPad + mainLabelH
                     + d * (ROWS_PER_DECADE * cellH + gapH)
                     + ROWS_PER_DECADE * cellH / 2
-    ctx.fillText(`${d * 10}`, sidePad + decadeLabelW * 0.5, blockMidY)
+    ctx.fillText(`${d * 10}`, sidePad * 0.38, blockMidY)
   }
 
   // Stats footer
