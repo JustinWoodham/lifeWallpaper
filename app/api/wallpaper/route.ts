@@ -98,7 +98,8 @@ function drawShape(
   }
 }
 
-// Draw the two-stat footer line: ● X lived   ○ Y left
+// Draw the two-stat footer:  "73 days lived ●   ○ 292 days left"
+// Text radiates outward from center — no overlap possible
 function drawStats(
   ctx: CanvasCtx,
   width: number,
@@ -108,44 +109,38 @@ function drawStats(
   leftText: string,
   dotR: number,
 ) {
-  const fontSize = Math.round(dotR * 2.2)
-  ctx.font = `300 ${fontSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`
+  const fontSize = Math.round(dotR * 2.4)
+  ctx.font = `300 ${fontSize}px Arial, sans-serif`
   ctx.textBaseline = 'middle'
 
-  const pad = dotR * 1.2   // space between dot edge and text
-  const gap = width * 0.1  // gap between the two stat groups at center
-
-  const livedW = ctx.measureText(livedText).width
-  const leftW  = ctx.measureText(leftText).width
-
-  // each group: [dot] [pad] [text]
-  const livedGroupW = dotR * 2 + pad + livedW
-  const leftGroupW  = dotR * 2 + pad + leftW
-
+  const pad = dotR * 1.2
   const centerX = width / 2
+  const dotGap = width * 0.04  // gap between the two dots at center
 
-  // lived group ends just left of center
-  const livedGroupX = centerX - gap / 2 - livedGroupW
-  // left group starts just right of center
-  const leftGroupX = centerX + gap / 2
-
-  // ● lived
+  // ● lived: dot just left of center, text extends LEFT (right-aligned to dot)
+  const livedDotX = centerX - dotGap - dotR
   ctx.fillStyle = theme.filled
   ctx.beginPath()
-  ctx.arc(livedGroupX + dotR, y, dotR, 0, Math.PI * 2)
+  ctx.arc(livedDotX, y, dotR, 0, Math.PI * 2)
   ctx.fill()
-  ctx.fillStyle = theme.text
-  ctx.textAlign = 'left'
-  ctx.fillText(livedText, livedGroupX + dotR * 2 + pad, y)
+  ctx.fillStyle = theme.filled
+  ctx.globalAlpha = 0.6
+  ctx.textAlign = 'right'
+  ctx.fillText(livedText, livedDotX - dotR - pad, y)
+  ctx.globalAlpha = 1
 
-  // ○ left
+  // ○ left: dot just right of center, text extends RIGHT (left-aligned from dot)
+  const leftDotX = centerX + dotGap + dotR
   ctx.strokeStyle = theme.empty
-  ctx.lineWidth = Math.max(1, dotR * 0.25)
+  ctx.lineWidth = Math.max(1.5, dotR * 0.22)
   ctx.beginPath()
-  ctx.arc(leftGroupX + dotR, y, dotR, 0, Math.PI * 2)
+  ctx.arc(leftDotX, y, dotR, 0, Math.PI * 2)
   ctx.stroke()
-  ctx.fillStyle = theme.text
-  ctx.fillText(leftText, leftGroupX + dotR * 2 + pad, y)
+  ctx.fillStyle = theme.empty
+  ctx.globalAlpha = 0.8
+  ctx.textAlign = 'left'
+  ctx.fillText(leftText, leftDotX + dotR + pad, y)
+  ctx.globalAlpha = 1
 }
 
 // ─── Year View (12 month blocks in 3×4 grid) ─────────────────────────────────
@@ -230,8 +225,8 @@ function drawYearView(
   }
 
   // Stats footer
-  const statDotR = Math.round(width * 0.010)
-  const statsY   = height - botPad * 0.5 - statH * 0.2
+  const statDotR = Math.round(width * 0.014)
+  const statsY   = height - botPad - statH * 0.3
   drawStats(ctx, width, statsY, theme,
     `${dayOfYear} days lived`,
     `${TOTAL - dayOfYear} days left`,
@@ -321,8 +316,8 @@ function drawLifeView(
   }
 
   // Stats footer
-  const statDotR = Math.round(width * 0.010)
-  const statsY   = height - botPad * 0.5 - statH * 0.2
+  const statDotR = Math.round(width * 0.014)
+  const statsY   = height - botPad - statH * 0.3
   const weeksLeft = Math.max(0, MAX_WEEKS - weeksLived)
   drawStats(ctx, width, statsY, theme,
     `${weeksLived.toLocaleString()} weeks lived`,
